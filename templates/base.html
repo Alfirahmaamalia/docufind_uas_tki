@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}STKI - Semantic Scholar Search{% endblock %}</title>
+    <meta name="description" content="{% block meta_desc %}Sistem Temu Kembali Informasi berbasis Sentence-BERT untuk pencarian artikel ilmiah Artificial Intelligence.{% endblock %}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <!-- Background Decorations -->
+    <div class="bg-decoration">
+        <div class="bg-blob bg-blob-1"></div>
+        <div class="bg-blob bg-blob-2"></div>
+        <div class="bg-blob bg-blob-3"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar-inner">
+            <a href="/" class="navbar-brand">
+                <div class="logo-icon">S</div>
+                <span>STKI Engine</span>
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link {% if active_page == 'search' %}active{% endif %}">🔍 Search</a></li>
+                <li><a href="/evaluation" class="nav-link {% if active_page == 'evaluation' %}active{% endif %}">📊 Evaluation</a></li>
+            </ul>
+            <div class="author-badges">
+                <span class="author-badge">Dea Delvinata Riyan (2317051027)</span>
+                <span class="author-badge">Alfi Rahma Amalia (2317051036)</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>STKI — Sistem Temu Kembali Informasi &middot; Model: <strong>Sentence-BERT (all-MiniLM-L6-v2)</strong> &middot; Similarity: <strong>Cosine Similarity</strong></p>
+        <p style="margin-top: 4px;">Dataset: <a href="https://www.semanticscholar.org/" target="_blank" rel="noopener">Semantic Scholar API</a> &middot; UTS Temu Kembali Informasi 2025</p>
+    </footer>
+
+    <!-- Navbar scroll effect -->
+    <script>
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 10) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>

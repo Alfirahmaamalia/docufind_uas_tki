@@ -1,7 +1,6 @@
 Flask
-pandas
+sentence-transformers
 scikit-learn
+pandas
 numpy
-gunicorn
-PyPDF2
-PyMuPDF
+requests

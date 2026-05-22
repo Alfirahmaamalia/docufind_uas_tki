@@ -1,524 +1,239 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% block title %}STKI - Pencarian Artikel Ilmiah AI{% endblock %}
+{% block meta_desc %}Cari artikel ilmiah Artificial Intelligence menggunakan Sentence-BERT dan Semantic Scholar API.{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TF-IDF Information Retrieval Engine</title>
-    <meta name="description" content="A premium TF-IDF based information retrieval system built for UTS TKI.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0d1117;
-            --surface-color: #161b22;
-            --surface-light: #21262d;
-            --primary: #58a6ff;
-            --primary-glow: rgba(88, 166, 255, 0.4);
-            --secondary: #8b949e;
-            --text-main: #c9d1d9;
-            --text-muted: #8b949e;
-            --border: #30363d;
-            --accent: #238636;
-        }
+{% block content %}
+<!-- Hero Section -->
+<section class="hero fade-in-up">
+    <h1 class="hero-title">Semantic Scholar Search</h1>
+    <p class="hero-subtitle">
+        Temukan artikel ilmiah bidang <strong>Artificial Intelligence</strong> menggunakan 
+        <strong>Sentence-BERT</strong> dan <strong>Cosine Similarity</strong> untuk pencarian semantik yang akurat.
+    </p>
+    <div class="hero-badges">
+        <span class="tech-badge"><span class="badge-dot"></span> Sentence-BERT (all-MiniLM-L6-v2)</span>
+        <span class="tech-badge"><span class="badge-dot green"></span> Cosine Similarity</span>
+        <span class="tech-badge"><span class="badge-dot purple"></span> Semantic Scholar API</span>
+        <span class="tech-badge"><span class="badge-dot orange"></span> Neural Network / Language Model</span>
+    </div>
+</section>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* Glassmorphism Background Elements */
-        .glass-blob {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(100px);
-            z-index: -1;
-            opacity: 0.5;
-            animation: float 20s infinite ease-in-out alternate;
-        }
-
-        .blob-1 {
-            width: 400px;
-            height: 400px;
-            background: rgba(88, 166, 255, 0.15);
-            top: -100px;
-            left: -100px;
-        }
-
-        .blob-2 {
-            width: 300px;
-            height: 300px;
-            background: rgba(35, 134, 54, 0.15);
-            bottom: -50px;
-            right: -50px;
-            animation-delay: -10s;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translate(0, 0);
-            }
-
-            100% {
-                transform: translate(50px, 50px);
-            }
-        }
-
-        header {
-            padding: 2rem 5%;
-            border-bottom: 1px solid var(--border);
-            background: rgba(13, 17, 23, 0.8);
-            backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        h1 {
-            font-weight: 800;
-            font-size: 1.8rem;
-            background: linear-gradient(90deg, var(--primary), #a371f7);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .authors {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            display: flex;
-            gap: 15px;
-        }
-
-        .author-badge {
-            background: var(--surface-light);
-            padding: 5px 12px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            font-weight: 600;
-        }
-
-        main {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            padding: 40px 5%;
-            flex-grow: 1;
-        }
-
-        @media (max-width: 900px) {
-            main {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .panel {
-            background: var(--surface-color);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            min-width: 0;
-        }
-
-        .panel:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-            border-color: rgba(88, 166, 255, 0.3);
-        }
-
-        .panel h2 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .panel h2::before {
-            content: '';
-            display: block;
-            width: 8px;
-            height: 24px;
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        /* Search Form */
-        .search-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .search-input-wrapper {
-            position: relative;
-            display: flex;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 16px 20px;
-            padding-right: 120px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: var(--surface-light);
-            color: var(--text-main);
-            font-size: 1.1rem;
-            font-family: inherit;
-            outline: none;
-            transition: all 0.3s ease;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--primary);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 3px var(--primary-glow);
-        }
-
-        button {
-            position: absolute;
-            right: 8px;
-            top: 8px;
-            bottom: 8px;
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 0 20px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
-        }
-
-        button:hover {
-            background: #6cbfff;
-            transform: scale(1.02);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        /* Tabs/Accordions */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
-
-        .tab-btn {
-            position: static;
-            background: var(--surface-light);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-        }
-
-        .tab-btn:hover {
-            background: var(--border);
-            color: var(--text-main);
-            transform: none;
-        }
-
-        .tab-btn.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-        }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.4s ease;
-            max-height: 500px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--surface-color);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary);
-        }
-
-        /* Table Styling */
-        .table-display {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        .table-display th {
-            position: sticky;
-            top: 0;
-            background: var(--surface-light);
-            padding: 12px 15px;
-            font-weight: 600;
-            color: #fff;
-            border-bottom: 2px solid var(--border);
-            z-index: 10;
-        }
-
-        .table-display td {
-            padding: 12px 15px;
-            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
-            color: var(--text-main);
-            vertical-align: top;
-            overflow-wrap: anywhere;
-        }
-
-        .table-display tbody tr {
-            transition: background 0.2s;
-        }
-
-        .table-display tbody tr:hover {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        /* Specific Search Results Table styling */
-        .search-results-table {
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-        }
-
-        .search-results-table tr {
-            animation: slideIn 0.3s ease forwards;
-            opacity: 0;
-            transform: translateX(-10px);
-        }
-
-        /* stagger animation for rows */
-        .search-results-table tbody tr:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .search-results-table tbody tr:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .search-results-table tbody tr:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-        .search-results-table tbody tr:nth-child(4) {
-            animation-delay: 0.4s;
-        }
-
-        .search-results-table tbody tr:nth-child(5) {
-            animation-delay: 0.5s;
-        }
-
-        @keyframes slideIn {
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .doc-list {
-            list-style: none;
-        }
-
-        .doc-list li {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 15px;
-        }
-
-        .doc-list li:last-child {
-            border-bottom: none;
-        }
-
-        .doc-num {
-            color: var(--primary);
-            font-weight: 800;
-        }
-
-        .doc-text {
-            word-wrap: break-word;
-            overflow-wrap: anywhere;
-        }
-
-        .no-results {
-            padding: 20px;
-            text-align: center;
-            color: var(--text-muted);
-            background: var(--surface-light);
-            border-radius: 8px;
-            border: 1px dashed var(--border);
-        }
-
-        .results-container {
-            margin-top: 20px;
-            overflow-x: auto;
-            width: 100%;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="glass-blob blob-1"></div>
-    <div class="glass-blob blob-2"></div>
-
-    <header>
-        <h1>TF-IDF Engine</h1>
-        <div class="authors">
-            <span class="author-badge">Dea Delvinata Riyan (2317051027)</span>
-            <span class="author-badge">Alfi Rahma Amalia (2317051036)</span>
-        </div>
-    </header>
-
-    <main>
-        <!-- Left Panel: Data & Computations -->
-        <section class="panel">
-            <h2>Dataset & Metrics</h2>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="openTab(event, 'tab-docs')">Documents</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab-tf')">TF</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab-idf')">IDF</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab-tfidf')">TF-IDF (Manual)</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab-tfidf-lib')">TF-IDF (Sklearn)</button>
-            </div>
-
-            <div id="tab-docs" class="tab-content active">
-                <ul class="doc-list">
-                    {% for i, doc in documents %}
-                    <li>
-                        <span class="doc-num">#{{ i }}</span>
-                        <div style="flex-grow: 1;">
-                            <span class="doc-text">{{ doc.preview }}</span>
-                            <div style="margin-top: 10px;">
-                                <a href="/pdf/{{ doc.name }}" target="_blank"
-                                    style="display:inline-block; padding:5px 12px; background:var(--surface-light); border:1px solid var(--primary); border-radius:6px; color:var(--primary); text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
-                                    onmouseover="this.style.background='var(--primary)'; this.style.color='#fff';"
-                                    onmouseout="this.style.background='var(--surface-light)'; this.style.color='var(--primary)';">📄
-                                    View PDF Document</a>
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div id="tab-tf" class="tab-content">
-                {{ tf_html|safe }}
-            </div>
-            <div id="tab-idf" class="tab-content">
-                {{ idf_html|safe }}
-            </div>
-            <div id="tab-tfidf" class="tab-content">
-                {{ tfidf_html|safe }}
-            </div>
-            <div id="tab-tfidf-lib" class="tab-content">
-                {{ tfidf_lib_html|safe }}
-            </div>
-        </section>
-
-        <!-- Right Panel: Search -->
-        <section class="panel">
-            <h2>Information Retrieval</h2>
-            <div class="search-container">
-                <form method="POST" action="/" class="search-input-wrapper">
-                    <input type="text" name="query" placeholder="Enter search query..." value="{{ query }}" required
-                        autocomplete="off">
-                    <button type="submit">Search</button>
-                </form>
-            </div>
-
-            <div class="results-container">
-                {% if search_results %}
-                <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: #fff;">Results for "{{ query }}"</h3>
-                {{ search_results|safe }}
-                {% elif query %}
-                <!-- Show nothing, handled by search_results being empty string logic in app.py if needed, but we pass "<div class='no-results'>..." -->
-                {% else %}
-                <div class="no-results">
-                    Enter a query above to calculate cosine similarity and retrieve relevant documents.
+<!-- Search Section -->
+<section class="search-section fade-in-up" style="animation-delay: 0.15s;">
+    <div class="search-card">
+        <form class="search-form" id="searchForm">
+            <div class="search-input-row">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchQuery" 
+                        name="query"
+                        placeholder="Cari artikel AI, mis: 'transformer natural language processing'..." 
+                        value="{{ query }}"
+                        required
+                        autocomplete="off"
+                    >
                 </div>
-                {% endif %}
             </div>
-        </section>
-    </main>
+            <div class="search-controls">
+                <div class="top-k-select">
+                    <label for="topK">Tampilkan:</label>
+                    <select id="topK" name="top_k">
+                        <option value="5" {% if top_k == 5 %}selected{% endif %}>Top 5</option>
+                        <option value="10" {% if top_k == 10 %}selected{% endif %}>Top 10</option>
+                        <option value="20" {% if top_k == 20 %}selected{% endif %}>Top 20</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" id="searchBtn">
+                    <span>🔎</span> Cari Artikel
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
 
-    <script>
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].classList.remove("active");
-            }
-            tablinks = document.getElementsByClassName("tab-btn");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].classList.remove("active");
-            }
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Mencari artikel ilmiah...</div>
+    <div class="loading-subtext">Mengambil data dari Semantic Scholar & menghitung similarity</div>
+</div>
+
+<!-- Results Section -->
+<section class="results-section" id="resultsSection">
+    {% if results %}
+    <div class="results-header">
+        <h2>Hasil Pencarian untuk "<em>{{ query }}</em>"</h2>
+        <div class="results-meta">
+            <span class="meta-tag">📄 {{ details.total_papers_fetched }} paper diambil</span>
+            <span class="meta-tag">🎯 {{ details.num_results }} hasil ditampilkan</span>
+            <span class="meta-tag">🤖 {{ details.model_name }}</span>
+            <span class="meta-tag">📐 {{ details.method }}</span>
+        </div>
+    </div>
+    <div class="results-detail" style="margin-bottom: 1.2rem;">
+        <div class="info-card" style="padding: 1rem;">
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.84rem; color: var(--text-secondary);">
+                <div><strong>Query Asli:</strong> {{ details.original_query }}</div>
+                <div><strong>Query Preprocessed:</strong> {{ details.preprocessed_query }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultsContainer">
+        {% for paper in results %}
+        <div class="paper-card">
+            <div class="paper-card-header">
+                <div class="rank-badge {% if paper.rank <= 3 %}top-3{% endif %}">#{{ paper.rank }}</div>
+                <div style="flex: 1;">
+                    <a href="{{ paper.url }}" target="_blank" rel="noopener" class="paper-title">{{ paper.title }}</a>
+                    <div class="paper-meta">
+                        <span class="paper-meta-item">
+                            <span class="meta-icon">👤</span> {{ paper.authors }}
+                        </span>
+                        <span class="paper-meta-item">
+                            <span class="meta-icon">📅</span> {{ paper.year if paper.year else 'N/A' }}
+                        </span>
+                        <span class="paper-meta-item">
+                            <span class="meta-icon">📝</span> {{ paper.citationCount }} sitasi
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <p class="paper-abstract">{{ paper.abstract }}</p>
+            <div class="paper-footer">
+                <div class="score-container">
+                    <span class="score-label">Similarity Score</span>
+                    <div class="score-bar-wrapper">
+                        <div class="score-bar" data-score="{{ (paper.similarityScore * 100) | round(1) }}"></div>
+                    </div>
+                    <span class="score-value">{{ paper.similarityScore }}</span>
+                </div>
+                <a href="{{ paper.url }}" target="_blank" rel="noopener" class="btn-open-paper">
+                    📄 Buka Paper
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% elif query %}
+    <!-- Empty state when search returned no results -->
+    <div class="empty-state">
+        <div class="empty-icon">🔎</div>
+        <h3>Tidak ditemukan hasil</h3>
+        <p>Tidak ada artikel yang cocok dengan query "<strong>{{ query }}</strong>". Coba gunakan kata kunci yang lebih umum atau berbeda.</p>
+    </div>
+
+    {% else %}
+    <!-- Initial empty state -->
+    <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h3>Mulai Pencarian</h3>
+        <p>Masukkan kata kunci di kolom pencarian untuk menemukan artikel ilmiah AI dari Semantic Scholar menggunakan Sentence-BERT.</p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Info Section -->
+<section class="info-section fade-in-up" style="animation-delay: 0.3s;">
+    <div class="info-grid">
+        <div class="info-card">
+            <h3><span class="info-icon">🧠</span> Model</h3>
+            <ul class="info-list">
+                <li>Neural Network / Language Model</li>
+                <li>Sentence-BERT (all-MiniLM-L6-v2)</li>
+                <li>384-dimensional embeddings</li>
+                <li>Semantic text understanding</li>
+            </ul>
+        </div>
+        <div class="info-card">
+            <h3><span class="info-icon">⚙️</span> Preprocessing</h3>
+            <ul class="info-list">
+                <li>Case folding (lowercase)</li>
+                <li>Remove punctuation</li>
+                <li>Stopword removal</li>
+                <li>Lightweight (BERT-aware)</li>
+            </ul>
+        </div>
+        <div class="info-card">
+            <h3><span class="info-icon">📊</span> Alur Retrieval</h3>
+            <ul class="info-list">
+                <li>Input query → Preprocessing</li>
+                <li>Fetch papers (Semantic Scholar API)</li>
+                <li>Encode query & docs (SBERT)</li>
+                <li>Cosine Similarity → Ranking</li>
+            </ul>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Apply dynamic score bar widths from data attributes
+        document.querySelectorAll('.score-bar[data-score]').forEach(function(bar) {
+            bar.style.width = bar.getAttribute('data-score') + '%';
+        });
+
+        // Search form handler
+        var searchForm = document.getElementById('searchForm');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                var query = document.getElementById('searchQuery').value.trim();
+                if (!query) return;
+
+                var topK = document.getElementById('topK').value;
+                var loadingOverlay = document.getElementById('loadingOverlay');
+                var searchBtn = document.getElementById('searchBtn');
+
+                // Show loading
+                loadingOverlay.classList.add('active');
+                searchBtn.disabled = true;
+                searchBtn.textContent = '⏳ Mencari...';
+
+                // Send AJAX request
+                fetch('/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, top_k: parseInt(topK) })
+                })
+                .then(function(response) { return response.json(); })
+                .then(function() {
+                    // Reload with server-rendered results
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/';
+
+                    var queryInput = document.createElement('input');
+                    queryInput.type = 'hidden';
+                    queryInput.name = 'query';
+                    queryInput.value = query;
+                    form.appendChild(queryInput);
+
+                    var topKInput = document.createElement('input');
+                    topKInput.type = 'hidden';
+                    topKInput.name = 'top_k';
+                    topKInput.value = topK;
+                    form.appendChild(topKInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                })
+                .catch(function() {
+                    // Fallback: submit form normally
+                    searchForm.action = '/';
+                    searchForm.method = 'POST';
+                    searchForm.onsubmit = null;
+                    searchForm.submit();
+                });
+            });
         }
-    </script>
-</body>
-
-</html>
+    });
+</script>
+{% endblock %}
