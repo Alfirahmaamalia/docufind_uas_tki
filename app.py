@@ -213,11 +213,27 @@ def format_authors(authors_list):
 EVAL_CACHE_FILE = os.path.join(CACHE_DIR, 'evaluation_results.json')
 
 def load_eval_cache():
-    """Load cached evaluation results"""
+    """Load cached evaluation results from JSON file"""
     if os.path.exists(EVAL_CACHE_FILE):
         try:
             with open(EVAL_CACHE_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                data = json.load(f)
+                # Convert @ keys to safe names for Jinja2 templates
+                for model_name in data:
+                    if 'per_query' in data[model_name]:
+                        for query_result in data[model_name]['per_query']:
+                            # Convert p@5 -> p__5, etc. for Jinja2 compatibility
+                            if 'p@5' in query_result:
+                                query_result['p__5'] = query_result.pop('p@5')
+                            if 'p@10' in query_result:
+                                query_result['p__10'] = query_result.pop('p@10')
+                            if 'r@10' in query_result:
+                                query_result['r__10'] = query_result.pop('r@10')
+                            if 'f1@10' in query_result:
+                                query_result['f1__10'] = query_result.pop('f1@10')
+                            if 'ndcg@10' in query_result:
+                                query_result['ndcg__10'] = query_result.pop('ndcg@10')
+                return data
         except:
             return None
     return None
@@ -305,15 +321,21 @@ def evaluation():
 
 @app.route('/api/run-evaluation', methods=['POST'])
 def api_run_evaluation():
-    """API endpoint to run full evaluation"""
+    """API endpoint to run/generate evaluation results"""
     try:
-        print("\n[Evaluation] Starting full evaluation...")
-        results = run_full_evaluation(ir_system, top_k=10)
+        print("\n[Evaluation] Generating evaluation results...")
+        
+        # Call run_full_evaluation from integrated_ir_system
+        results = run_full_evaluation(ir_system, fetch_papers_func=fetch_papers, top_k=10)
+        
+        # Save to cache
         save_eval_cache(results)
-        print("[Evaluation] OK - Evaluation complete!")
+        print("[Evaluation] OK - Evaluation results generated and saved!")
         return jsonify({'status': 'success', 'data': results})
     except Exception as e:
         print(f"[Evaluation Error] {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

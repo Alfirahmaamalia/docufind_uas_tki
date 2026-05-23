@@ -1,235 +1,191 @@
 {% extends "base.html" %}
 {% block title %}STKI - Evaluasi Performa Sistem{% endblock %}
-{% block meta_desc %}Evaluasi performa sistem retrieval STKI menggunakan Precision@K dan Mean Average Precision.{% endblock %}
+{% block meta_desc %}Evaluasi performa sistem retrieval STKI{% endblock %}
 
 {% block content %}
 <section class="eval-section fade-in-up">
     <div class="eval-header">
-        <h1>📊 Evaluasi Performa Sistem</h1>
-        <p>Pengujian menggunakan {{ eval_data.num_queries if eval_data else '12' }} query dengan metrik Precision@K dan Mean Average Precision (MAP)</p>
+        <h1>Evaluasi Performa Sistem</h1>
+        <p>Metrik performa untuk 3 model retrieval: SBERT, TF-IDF, dan BM25</p>
     </div>
 
-    {% if eval_data %}
-    <!-- Summary Cards -->
-    <div class="eval-summary">
-        <div class="summary-card">
-            <div class="metric-value">{{ eval_data.map }}</div>
-            <div class="metric-label">Mean Average Precision (MAP)</div>
-        </div>
-        <div class="summary-card">
-            <div class="metric-value">{{ eval_data.avg_precision_at_5 }}</div>
-            <div class="metric-label">Avg. Precision@5</div>
-        </div>
-        <div class="summary-card">
-            <div class="metric-value">{{ eval_data.avg_precision_at_10 }}</div>
-            <div class="metric-label">Avg. Precision@10</div>
-        </div>
-        <div class="summary-card">
-            <div class="metric-value">{{ eval_data.num_queries }}</div>
-            <div class="metric-label">Total Query Pengujian</div>
-        </div>
-    </div>
-
-    <!-- Precision Chart (CSS-based bar chart) -->
-    <div class="eval-table-wrapper eval-chart-box">
-        <h3 class="eval-chart-title">
-            📈 Visualisasi Precision per Query
-        </h3>
-        <div class="eval-chart-rows">
-            {% for item in eval_data.per_query %}
-            <div class="eval-chart-row">
-                <div class="eval-chart-label">Q{{ loop.index }}</div>
-                <div class="eval-chart-bars">
-                    <!-- P@5 bar -->
-                    <div class="eval-bar-col">
-                        <div class="eval-bar-track">
-                            <div class="eval-bar-fill eval-bar-p5" data-width="{{ (item.precision_at_5 * 100) }}"></div>
+    {% if results %}
+        <!-- Results Available -->
+        <div class="eval-content">
+            {% set models = ['sbert', 'tfidf', 'bm25'] %}
+            {% for model in models %}
+                {% if model in results %}
+                    {% set result = results[model] %}
+                    <div class="model-results">
+                        <h2>{{ result.model_name }}</h2>
+                        
+                        <!-- Summary Metrics -->
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">MAP</div>
+                                <div class="metric-value">{{ result.map }}</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Avg P@10</div>
+                                <div class="metric-value">{{ result.avg_p_at_10 if result.get('avg_p_at_10') else result.avg_p10 }}</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Avg R@10</div>
+                                <div class="metric-value">{{ result.avg_r_at_10 if result.get('avg_r_at_10') else result.avg_r10 }}</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Avg NDCG@10</div>
+                                <div class="metric-value">{{ result.avg_ndcg_at_10 if result.get('avg_ndcg_at_10') else result.avg_ndcg10 }}</div>
+                            </div>
                         </div>
+                        
+                        <!-- Per-Query Results Table -->
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Query</th>
+                                    <th>P@5</th>
+                                    <th>P@10</th>
+                                    <th>R@10</th>
+                                    <th>F1@10</th>
+                                    <th>NDCG@10</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for query_result in result.per_query %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ query_result.query[:50] }}</td>
+                                    <td>{{ query_result.p__5 if query_result.get('p__5') else query_result['p@5'] }}</td>
+                                    <td>{{ query_result.p__10 if query_result.get('p__10') else query_result['p@10'] }}</td>
+                                    <td>{{ query_result.r__10 if query_result.get('r__10') else query_result['r@10'] }}</td>
+                                    <td>{{ query_result.f1__10 if query_result.get('f1__10') else query_result['f1@10'] }}</td>
+                                    <td>{{ query_result.ndcg__10 if query_result.get('ndcg__10') else query_result['ndcg@10'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <span class="eval-bar-value eval-bar-value-p5">P@5: {{ item.precision_at_5 }}</span>
-                    <!-- P@10 bar -->
-                    <div class="eval-bar-col">
-                        <div class="eval-bar-track">
-                            <div class="eval-bar-fill eval-bar-p10" data-width="{{ (item.precision_at_10 * 100) }}"></div>
-                        </div>
-                    </div>
-                    <span class="eval-bar-value eval-bar-value-p10">P@10: {{ item.precision_at_10 }}</span>
-                </div>
-            </div>
+                    <hr style="margin: 40px 0; opacity: 0.3;">
+                {% endif %}
             {% endfor %}
         </div>
-        <div class="eval-chart-legend">
-            <div class="eval-legend-item">
-                <div class="eval-legend-swatch eval-legend-p5"></div>
-                Precision@5
-            </div>
-            <div class="eval-legend-item">
-                <div class="eval-legend-swatch eval-legend-p10"></div>
-                Precision@10
-            </div>
-        </div>
-    </div>
-
-    <!-- Detailed Results Table -->
-    <div class="eval-table-wrapper">
-        <table class="eval-table">
-            <thead>
-                <tr>
-                    <th class="eval-th-narrow">#</th>
-                    <th>Query</th>
-                    <th class="eval-th-metric">P@5</th>
-                    <th class="eval-th-metric">P@10</th>
-                    <th class="eval-th-metric">AP</th>
-                    <th class="eval-th-small">Retrieved</th>
-                    <th class="eval-th-small">Relevant</th>
-                    <th class="eval-th-small">Detail</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in eval_data.per_query %}
-                <tr>
-                    <td class="eval-row-num">{{ loop.index }}</td>
-                    <td class="query-cell">
-                        <div class="query-text">{{ item.query }}</div>
-                        <div class="query-desc">{{ item.description }}</div>
-                    </td>
-                    <td class="metric-cell {% if item.precision_at_5 >= 0.7 %}high{% elif item.precision_at_5 >= 0.4 %}medium{% else %}low{% endif %}">
-                        {{ item.precision_at_5 }}
-                    </td>
-                    <td class="metric-cell {% if item.precision_at_10 >= 0.7 %}high{% elif item.precision_at_10 >= 0.4 %}medium{% else %}low{% endif %}">
-                        {{ item.precision_at_10 }}
-                    </td>
-                    <td class="metric-cell {% if item.ap >= 0.7 %}high{% elif item.ap >= 0.4 %}medium{% else %}low{% endif %}">
-                        {{ item.ap }}
-                    </td>
-                    <td>{{ item.num_retrieved }}</td>
-                    <td>{{ item.num_relevant }}</td>
-                    <td>
-                        <span class="eval-results-toggle" data-detail-id="{{ loop.index }}">
-                            Lihat ▼
-                        </span>
-                    </td>
-                </tr>
-                <tr class="eval-detail-row" id="detail-{{ loop.index }}">
-                    <td colspan="8">
-                        <div class="eval-detail-content">
-                            <strong class="eval-detail-label">Top-10 Retrieved Papers:</strong>
-                            <ul class="eval-mini-results eval-detail-list">
-                                {% for rp in item.results_preview %}
-                                <li class="{% if rp.relevant %}relevant{% else %}not-relevant{% endif %}">
-                                    <span class="relevance-dot {% if rp.relevant %}rel{% else %}not-rel{% endif %}"></span>
-                                    <span class="eval-mini-rank">#{{ rp.rank }}</span>
-                                    <span class="eval-mini-title">{{ rp.title }}</span>
-                                    <span class="eval-mini-score">{{ rp.score }}</span>
-                                    <span class="eval-mini-label">{% if rp.relevant %}✅ Relevant{% else %}❌ Not Relevant{% endif %}</span>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Methodology Info -->
-    <div class="info-grid eval-info-grid">
-        <div class="info-card">
-            <h3><span class="info-icon">📐</span> Metrik Evaluasi</h3>
-            <ul class="info-list">
-                <li><strong>Precision@K</strong> = jumlah dokumen relevan di top-K / K</li>
-                <li><strong>Average Precision (AP)</strong> = rata-rata precision pada tiap dokumen relevan</li>
-                <li><strong>MAP</strong> = rata-rata AP dari semua query pengujian</li>
-            </ul>
-        </div>
-        <div class="info-card">
-            <h3><span class="info-icon">🎯</span> Penentuan Relevansi</h3>
-            <ul class="info-list">
-                <li>Relevansi ditentukan melalui keyword matching</li>
-                <li>Paper dianggap relevan jika mengandung ≥2 keyword dari ground truth</li>
-                <li>Keyword dipilih berdasarkan konteks topik query</li>
-            </ul>
-        </div>
-        <div class="info-card">
-            <h3><span class="info-icon">🧪</span> Pengujian</h3>
-            <ul class="info-list">
-                <li>{{ eval_data.num_queries }} query dengan konteks berbeda</li>
-                <li>Topik: Transformer, RL, CNN, GAN, GNN, dll.</li>
-                <li>Dataset diambil real-time dari Semantic Scholar</li>
-            </ul>
-        </div>
-    </div>
-
+        
     {% else %}
-    <!-- Not yet evaluated state -->
-    <div class="empty-state eval-empty">
-        <div class="empty-icon">📊</div>
-        <h3>Evaluasi Belum Dijalankan</h3>
-        <p class="eval-empty-desc">Klik tombol di bawah untuk menjalankan evaluasi performa sistem menggunakan {{ num_queries }} query pengujian. Proses ini memerlukan beberapa menit.</p>
-        <form action="/api/evaluate" method="POST" id="evalForm">
-            <button type="submit" class="btn btn-primary" id="evalBtn">
-                🚀 Jalankan Evaluasi
-            </button>
-        </form>
-    </div>
-
-    <!-- Loading overlay for evaluation -->
-    <div class="loading-overlay" id="evalLoadingOverlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Menjalankan evaluasi...</div>
-        <div class="loading-subtext">Memproses {{ num_queries }} query pengujian (ini memerlukan beberapa menit)</div>
-    </div>
+        <!-- No Results - Show Button to Generate -->
+        <div class="no-results">
+            <div class="empty-icon">📊</div>
+            <h3>Evaluasi Belum Dijalankan</h3>
+            <p>Klik tombol di bawah untuk generate evaluation results</p>
+            <button class="btn-eval" id="runEvalBtn">Generate Evaluation</button>
+        </div>
     {% endif %}
 </section>
+
+<style>
+    .eval-section { padding: 40px 20px; }
+    .eval-header { text-align: center; margin-bottom: 40px; }
+    .eval-header h1 { margin: 0; font-size: 2em; }
+    .eval-header p { margin: 10px 0 0 0; color: #666; }
+    
+    .eval-content { max-width: 1200px; margin: 0 auto; }
+    
+    .model-results { margin-bottom: 50px; }
+    .model-results h2 { margin-top: 0; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+    
+    .metrics-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+        gap: 15px; 
+        margin: 20px 0;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .metric-label { font-size: 0.9em; opacity: 0.9; }
+    .metric-value { font-size: 1.8em; font-weight: bold; margin-top: 5px; }
+    
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .results-table thead {
+        background: #f8f9fa;
+        font-weight: bold;
+    }
+    
+    .results-table th, .results-table td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .results-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 80px 20px;
+    }
+    
+    .empty-icon { font-size: 4em; margin-bottom: 20px; }
+    .no-results h3 { margin: 20px 0 10px 0; }
+    .no-results p { color: #666; margin-bottom: 30px; }
+    
+    .btn-eval {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .btn-eval:hover { transform: translateY(-2px); }
+    .btn-eval:active { transform: translateY(0); }
+</style>
+
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    // Apply dynamic bar widths from data attributes
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.eval-bar-fill[data-width]').forEach(function(bar) {
-            bar.style.width = bar.getAttribute('data-width') + '%';
+    const runEvalBtn = document.getElementById('runEvalBtn');
+    if (runEvalBtn) {
+        runEvalBtn.addEventListener('click', async () => {
+            runEvalBtn.disabled = true;
+            runEvalBtn.textContent = 'Generating...';
+            
+            try {
+                const response = await fetch('/api/run-evaluation', { method: 'POST' });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error generating evaluation');
+                    runEvalBtn.disabled = false;
+                    runEvalBtn.textContent = 'Generate Evaluation';
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+                runEvalBtn.disabled = false;
+                runEvalBtn.textContent = 'Generate Evaluation';
+            }
         });
-
-        // Bind toggle detail handlers
-        document.querySelectorAll('.eval-results-toggle[data-detail-id]').forEach(function(toggle) {
-            toggle.addEventListener('click', function() {
-                var id = this.getAttribute('data-detail-id');
-                var row = document.getElementById('detail-' + id);
-                row.classList.toggle('active');
-                this.textContent = row.classList.contains('active') ? 'Tutup ▲' : 'Lihat ▼';
-            });
-        });
-
-        // Bind evaluation form
-        var evalForm = document.getElementById('evalForm');
-        if (evalForm) {
-            evalForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                var loadingOverlay = document.getElementById('evalLoadingOverlay');
-                var evalBtn = document.getElementById('evalBtn');
-                loadingOverlay.classList.add('active');
-                evalBtn.disabled = true;
-                evalBtn.textContent = '⏳ Menjalankan evaluasi...';
-
-                fetch('/api/evaluate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                .then(function(response) { return response.json(); })
-                .then(function() {
-                    window.location.href = '/evaluation';
-                })
-                .catch(function(error) {
-                    console.error('Evaluation error:', error);
-                    loadingOverlay.classList.remove('active');
-                    evalBtn.disabled = false;
-                    evalBtn.textContent = '🚀 Jalankan Evaluasi';
-                    alert('Terjadi error saat evaluasi. Silakan coba lagi.');
-                });
-            });
-        }
-    });
+    }
 </script>
 {% endblock %}
