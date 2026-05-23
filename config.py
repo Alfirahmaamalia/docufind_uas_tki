@@ -1,7 +1,9 @@
 """
-Configuration constants for STKI SBERT application.
+Configuration constants for STKI - Sistem Temu Kembali Informasi
+Uses SQLite for model caching and evaluation results
 """
 import os
+import sqlite3
 
 # --- SBERT Model ---
 SBERT_MODEL_NAME = 'all-MiniLM-L6-v2'
@@ -15,9 +17,10 @@ DEFAULT_API_LIMIT = 50  # Number of papers to fetch per query
 DEFAULT_TOP_K = 10
 TOP_K_OPTIONS = [5, 10, 20]
 
-# --- Caching ---
+# --- File & Database Structure ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(BASE_DIR, 'cache')
+DB_PATH = os.path.join(CACHE_DIR, 'stki.db')  # SQLite database
 
 # Ensure cache directory exists
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -25,6 +28,54 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 # Redirect HF and Torch cache directories to D: drive to preserve space on C:
 os.environ['HF_HOME'] = os.path.join(CACHE_DIR, 'hf_home')
 os.environ['TORCH_HOME'] = os.path.join(CACHE_DIR, 'torch_home')
+
+# --- SQLite Database Helper ---
+def get_db_connection():
+    """Get SQLite database connection"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    """Initialize SQLite database with required tables"""
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    # Model status table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS model_status (
+            model_name TEXT PRIMARY KEY,
+            is_loaded INTEGER DEFAULT 0,
+            loaded_at TEXT,
+            status TEXT
+        )
+    ''')
+    
+    # Papers cache table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS papers_cache (
+            query_hash TEXT PRIMARY KEY,
+            query TEXT,
+            papers TEXT,
+            cached_at TEXT,
+            ttl_hours INTEGER DEFAULT 24
+        )
+    ''')
+    
+    # Evaluation results table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS evaluation_results (
+            eval_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            model_name TEXT,
+            query TEXT,
+            metric_name TEXT,
+            metric_value REAL,
+            evaluated_at TEXT
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
 
 # --- Preprocessing ---
 STOPWORDS = {
@@ -44,3 +95,6 @@ STOPWORDS = {
     'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself',
     'they', 'them', 'their', 'theirs', 'themselves', 'about', 'up',
 }
+
+# Initialize database on import
+init_db()

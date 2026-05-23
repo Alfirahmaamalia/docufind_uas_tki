@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}STKI - Semantic Scholar Search{% endblock %}</title>
-    <meta name="description" content="{% block meta_desc %}Sistem Temu Kembali Informasi berbasis Sentence-BERT untuk pencarian artikel ilmiah Artificial Intelligence.{% endblock %}">
+    <title>{% block title %}STKI - Sistem Temu Kembali Informasi{% endblock %}</title>
+    <meta name="description" content="{% block meta_desc %}Sistem Temu Kembali Informasi berbasis SBERT, TF-IDF, dan BM25 untuk pencarian artikel ilmiah.{% endblock %}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Additional responsive fixes */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 1.8rem; }
+            .navbar-inner { flex-wrap: wrap; }
+            .author-badges { font-size: 0.65rem; }
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
-
 <body>
     <!-- Background Decorations -->
     <div class="bg-decoration">
@@ -22,16 +28,15 @@
     <nav class="navbar" id="navbar">
         <div class="navbar-inner">
             <a href="/" class="navbar-brand">
-                <div class="logo-icon">S</div>
-                <span>STKI Engine</span>
+                <div class="logo-icon">🔍</div>
+                <span>STKI</span>
             </a>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link {% if active_page == 'search' %}active{% endif %}">🔍 Search</a></li>
                 <li><a href="/evaluation" class="nav-link {% if active_page == 'evaluation' %}active{% endif %}">📊 Evaluation</a></li>
             </ul>
             <div class="author-badges">
-                <span class="author-badge">Dea Delvinata Riyan (2317051027)</span>
-                <span class="author-badge">Alfi Rahma Amalia (2317051036)</span>
+                <span class="author-badge">🎓 COM620321 - STKI</span>
             </div>
         </div>
     </nav>
@@ -43,8 +48,12 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <p>STKI — Sistem Temu Kembali Informasi &middot; Model: <strong>Sentence-BERT (all-MiniLM-L6-v2)</strong> &middot; Similarity: <strong>Cosine Similarity</strong></p>
-        <p style="margin-top: 4px;">Dataset: <a href="https://www.semanticscholar.org/" target="_blank" rel="noopener">Semantic Scholar API</a> &middot; UTS Temu Kembali Informasi 2025</p>
+        <p>STKI — Sistem Temu Kembali Informasi &middot; <strong>3 Models:</strong> SBERT | TF-IDF | BM25</p>
+        <p style="margin-top: 8px; font-size: 0.85rem;">
+            Dataset: <a href="https://www.semanticscholar.org/" target="_blank" rel="noopener">Semantic Scholar API</a> 
+            &middot; Database: SQLite 
+            &middot; Framework: Flask & Sentence-BERT
+        </p>
     </footer>
 
     <!-- Navbar scroll effect -->
@@ -60,5 +69,4 @@
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>
-
 </html>

@@ -1,27 +1,27 @@
 {% extends "base.html" %}
-{% block title %}STKI - Pencarian Artikel Ilmiah AI{% endblock %}
-{% block meta_desc %}Cari artikel ilmiah Artificial Intelligence menggunakan Sentence-BERT dan Semantic Scholar API.{% endblock %}
+{% block title %}STKI - Pencarian Artikel Ilmiah{% endblock %}
+{% block meta_desc %}Cari artikel ilmiah menggunakan SBERT, TF-IDF, atau BM25 dari Semantic Scholar.{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="hero fade-in-up">
-    <h1 class="hero-title">Semantic Scholar Search</h1>
+    <h1 class="hero-title">🔍 Semantic Scholar Search</h1>
     <p class="hero-subtitle">
-        Temukan artikel ilmiah bidang <strong>Artificial Intelligence</strong> menggunakan 
-        <strong>Sentence-BERT</strong> dan <strong>Cosine Similarity</strong> untuk pencarian semantik yang akurat.
+        Temukan artikel ilmiah bidang <strong>Artificial Intelligence</strong> dengan 
+        <strong>3 model berbeda</strong>: SBERT, TF-IDF, dan BM25 untuk hasil yang akurat.
     </p>
     <div class="hero-badges">
-        <span class="tech-badge"><span class="badge-dot"></span> Sentence-BERT (all-MiniLM-L6-v2)</span>
-        <span class="tech-badge"><span class="badge-dot green"></span> Cosine Similarity</span>
-        <span class="tech-badge"><span class="badge-dot purple"></span> Semantic Scholar API</span>
-        <span class="tech-badge"><span class="badge-dot orange"></span> Neural Network / Language Model</span>
+        <span class="tech-badge"><span class="badge-dot"></span> SBERT (Neural)</span>
+        <span class="tech-badge"><span class="badge-dot green"></span> TF-IDF (Vector)</span>
+        <span class="tech-badge"><span class="badge-dot purple"></span> BM25 (Probabilistic)</span>
+        <span class="tech-badge"><span class="badge-dot orange"></span> SQLite Database</span>
     </div>
 </section>
 
 <!-- Search Section -->
 <section class="search-section fade-in-up" style="animation-delay: 0.15s;">
     <div class="search-card">
-        <form class="search-form" id="searchForm">
+        <form class="search-form" id="searchForm" method="POST" action="/">
             <div class="search-input-row">
                 <div class="search-input-wrapper">
                     <span class="search-icon">🔍</span>
@@ -30,14 +30,22 @@
                         class="search-input" 
                         id="searchQuery" 
                         name="query"
-                        placeholder="Cari artikel AI, mis: 'transformer natural language processing'..." 
-                        value="{{ query }}"
+                        placeholder="Contoh: 'transformer attention mechanism' atau 'deep learning'" 
+                        value="{{ query or '' }}"
                         required
                         autocomplete="off"
                     >
                 </div>
             </div>
             <div class="search-controls">
+                <div class="model-select">
+                    <label for="modelSelect">Model:</label>
+                    <select id="modelSelect" name="model">
+                        <option value="sbert" {% if model == 'sbert' %}selected{% endif %}>SBERT (Semantic)</option>
+                        <option value="tfidf" {% if model == 'tfidf' %}selected{% endif %}>TF-IDF (Vector Space)</option>
+                        <option value="bm25" {% if model == 'bm25' %}selected{% endif %}>BM25 (Probabilistic)</option>
+                    </select>
+                </div>
                 <div class="top-k-select">
                     <label for="topK">Tampilkan:</label>
                     <select id="topK" name="top_k">
@@ -47,7 +55,7 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary" id="searchBtn">
-                    <span>🔎</span> Cari Artikel
+                    <span>🔎</span> Cari
                 </button>
             </div>
         </form>
@@ -70,28 +78,19 @@
             <span class="meta-tag">📄 {{ details.total_papers_fetched }} paper diambil</span>
             <span class="meta-tag">🎯 {{ details.num_results }} hasil ditampilkan</span>
             <span class="meta-tag">🤖 {{ details.model_name }}</span>
-            <span class="meta-tag">📐 {{ details.method }}</span>
-        </div>
-    </div>
-    <div class="results-detail" style="margin-bottom: 1.2rem;">
-        <div class="info-card" style="padding: 1rem;">
-            <div style="display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.84rem; color: var(--text-secondary);">
-                <div><strong>Query Asli:</strong> {{ details.original_query }}</div>
-                <div><strong>Query Preprocessed:</strong> {{ details.preprocessed_query }}</div>
-            </div>
         </div>
     </div>
 
-    <div id="resultsContainer">
+    <div id="resultsContainer" class="results-container">
         {% for paper in results %}
         <div class="paper-card">
             <div class="paper-card-header">
                 <div class="rank-badge {% if paper.rank <= 3 %}top-3{% endif %}">#{{ paper.rank }}</div>
                 <div style="flex: 1;">
-                    <a href="{{ paper.url }}" target="_blank" rel="noopener" class="paper-title">{{ paper.title }}</a>
+                    <a href="{{ paper.url or '#' }}" target="_blank" rel="noopener" class="paper-title">{{ paper.title }}</a>
                     <div class="paper-meta">
                         <span class="paper-meta-item">
-                            <span class="meta-icon">👤</span> {{ paper.authors }}
+                            <span class="meta-icon">👤</span> {% if paper.authors is iterable and paper.authors is not string %}{{ paper.authors | join(', ') }}{% else %}{{ paper.authors }}{% endif %}
                         </span>
                         <span class="paper-meta-item">
                             <span class="meta-icon">📅</span> {{ paper.year if paper.year else 'N/A' }}
@@ -102,16 +101,16 @@
                     </div>
                 </div>
             </div>
-            <p class="paper-abstract">{{ paper.abstract }}</p>
+            <p class="paper-abstract">{{ paper.abstract[:300] if paper.abstract else 'Tidak ada ringkasan' }}...</p>
             <div class="paper-footer">
                 <div class="score-container">
                     <span class="score-label">Similarity Score</span>
                     <div class="score-bar-wrapper">
-                        <div class="score-bar" data-score="{{ (paper.similarityScore * 100) | round(1) }}"></div>
+                        <div class="score-bar" style="width: {{ (paper.similarityScore * 100) | round(1) }}%"></div>
                     </div>
                     <span class="score-value">{{ paper.similarityScore }}</span>
                 </div>
-                <a href="{{ paper.url }}" target="_blank" rel="noopener" class="btn-open-paper">
+                <a href="{{ paper.url or '#' }}" target="_blank" rel="noopener" class="btn-open-paper" {% if not paper.url %}onclick="return false;"{% endif %}>
                     📄 Buka Paper
                 </a>
             </div>
@@ -120,7 +119,6 @@
     </div>
 
     {% elif query %}
-    <!-- Empty state when search returned no results -->
     <div class="empty-state">
         <div class="empty-icon">🔎</div>
         <h3>Tidak ditemukan hasil</h3>
@@ -128,11 +126,10 @@
     </div>
 
     {% else %}
-    <!-- Initial empty state -->
     <div class="empty-state">
         <div class="empty-icon">📚</div>
         <h3>Mulai Pencarian</h3>
-        <p>Masukkan kata kunci di kolom pencarian untuk menemukan artikel ilmiah AI dari Semantic Scholar menggunakan Sentence-BERT.</p>
+        <p>Masukkan kata kunci untuk menemukan artikel ilmiah AI dari Semantic Scholar menggunakan SBERT, TF-IDF, atau BM25.</p>
     </div>
     {% endif %}
 </section>
@@ -141,12 +138,12 @@
 <section class="info-section fade-in-up" style="animation-delay: 0.3s;">
     <div class="info-grid">
         <div class="info-card">
-            <h3><span class="info-icon">🧠</span> Model</h3>
+            <h3><span class="info-icon">🧠</span> 3 Models</h3>
             <ul class="info-list">
-                <li>Neural Network / Language Model</li>
-                <li>Sentence-BERT (all-MiniLM-L6-v2)</li>
-                <li>384-dimensional embeddings</li>
-                <li>Semantic text understanding</li>
+                <li><strong>SBERT:</strong> Neural semantic search</li>
+                <li><strong>TF-IDF:</strong> Vector space model</li>
+                <li><strong>BM25:</strong> Probabilistic ranking</li>
+                <li>Enhanced multi-factor scoring</li>
             </ul>
         </div>
         <div class="info-card">
@@ -154,17 +151,17 @@
             <ul class="info-list">
                 <li>Case folding (lowercase)</li>
                 <li>Remove punctuation</li>
-                <li>Stopword removal</li>
-                <li>Lightweight (BERT-aware)</li>
+                <li>Stopword removal (110+ words)</li>
+                <li>Token-based normalization</li>
             </ul>
         </div>
         <div class="info-card">
-            <h3><span class="info-icon">📊</span> Alur Retrieval</h3>
+            <h3><span class="info-icon">📊</span> Pipeline</h3>
             <ul class="info-list">
                 <li>Input query → Preprocessing</li>
                 <li>Fetch papers (Semantic Scholar API)</li>
-                <li>Encode query & docs (SBERT)</li>
-                <li>Cosine Similarity → Ranking</li>
+                <li>Encode query & docs</li>
+                <li>Similarity → Ranking</li>
             </ul>
         </div>
     </div>
@@ -174,66 +171,30 @@
 {% block extra_scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Apply dynamic score bar widths from data attributes
-        document.querySelectorAll('.score-bar[data-score]').forEach(function(bar) {
-            bar.style.width = bar.getAttribute('data-score') + '%';
-        });
+        const searchForm = document.getElementById('searchForm');
+        const searchBtn = document.getElementById('searchBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
 
-        // Search form handler
-        var searchForm = document.getElementById('searchForm');
         if (searchForm) {
             searchForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                var query = document.getElementById('searchQuery').value.trim();
-                if (!query) return;
-
-                var topK = document.getElementById('topK').value;
-                var loadingOverlay = document.getElementById('loadingOverlay');
-                var searchBtn = document.getElementById('searchBtn');
-
-                // Show loading
+                const query = document.getElementById('searchQuery').value.trim();
+                if (!query) {
+                    event.preventDefault();
+                    return;
+                }
                 loadingOverlay.classList.add('active');
                 searchBtn.disabled = true;
-                searchBtn.textContent = '⏳ Mencari...';
-
-                // Send AJAX request
-                fetch('/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query, top_k: parseInt(topK) })
-                })
-                .then(function(response) { return response.json(); })
-                .then(function() {
-                    // Reload with server-rendered results
-                    var form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = '/';
-
-                    var queryInput = document.createElement('input');
-                    queryInput.type = 'hidden';
-                    queryInput.name = 'query';
-                    queryInput.value = query;
-                    form.appendChild(queryInput);
-
-                    var topKInput = document.createElement('input');
-                    topKInput.type = 'hidden';
-                    topKInput.name = 'top_k';
-                    topKInput.value = topK;
-                    form.appendChild(topKInput);
-
-                    document.body.appendChild(form);
-                    form.submit();
-                })
-                .catch(function() {
-                    // Fallback: submit form normally
-                    searchForm.action = '/';
-                    searchForm.method = 'POST';
-                    searchForm.onsubmit = null;
-                    searchForm.submit();
-                });
+                searchBtn.innerHTML = '<span>⏳</span> Mencari...';
             });
         }
+
+        window.addEventListener('load', function() {
+            loadingOverlay.classList.remove('active');
+            if (searchBtn) {
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<span>🔎</span> Cari';
+            }
+        });
     });
 </script>
 {% endblock %}
