@@ -18,8 +18,7 @@ import requests
 
 # Fix Windows encoding for emoji/unicode
 if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
 
 from flask import Flask, render_template, request, jsonify
 from models.integrated_ir_system import get_ir_system, run_full_evaluation
@@ -213,28 +212,61 @@ def format_authors(authors_list):
 EVAL_CACHE_FILE = os.path.join(CACHE_DIR, 'evaluation_results.json')
 
 def load_eval_cache():
-    """Load cached evaluation results from JSON file"""
+    """Load cached evaluation results from JSON file and normalize keys for Jinja2"""
     if os.path.exists(EVAL_CACHE_FILE):
         try:
             with open(EVAL_CACHE_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                # Convert @ keys to safe names for Jinja2 templates
+                
+                # Standardize keys dynamically for Jinja2 template compatibility
                 for model_name in data:
-                    if 'per_query' in data[model_name]:
-                        for query_result in data[model_name]['per_query']:
-                            # Convert p@5 -> p__5, etc. for Jinja2 compatibility
-                            if 'p@5' in query_result:
-                                query_result['p__5'] = query_result.pop('p@5')
-                            if 'p@10' in query_result:
-                                query_result['p__10'] = query_result.pop('p@10')
-                            if 'r@10' in query_result:
-                                query_result['r__10'] = query_result.pop('r@10')
-                            if 'f1@10' in query_result:
-                                query_result['f1__10'] = query_result.pop('f1@10')
-                            if 'ndcg@10' in query_result:
-                                query_result['ndcg__10'] = query_result.pop('ndcg@10')
+                    model_data = data[model_name]
+                    
+                    # Convert root level keys like avg_p@10 -> avg_p_at_10, avg_p10
+                    for key in list(model_data.keys()):
+                        if '@' in key:
+                            # Convert e.g. avg_p@10 -> avg_p_at_10
+                            new_key_at = key.replace('@', '_at_')
+                            model_data[new_key_at] = model_data[key]
+                            
+                            # Convert e.g. avg_p@10 -> avg_p10
+                            new_key_flat = key.replace('@', '')
+                            model_data[new_key_flat] = model_data[key]
+                            
+                        elif '_at_' in key:
+                            # If already in _at_ format, add the flat version for templates
+                            new_key_flat = key.replace('_at_', '')
+                            model_data[new_key_flat] = model_data[key]
+                            
+                    # Convert query level keys
+                    if 'per_query' in model_data:
+                        for query_result in model_data['per_query']:
+                            for key in list(query_result.keys()):
+                                if '@' in key:
+                                    # Convert p@5 -> p_at_5
+                                    new_key_at = key.replace('@', '_at_')
+                                    query_result[new_key_at] = query_result[key]
+                                    
+                                    # Convert p@5 -> p__5
+                                    new_key_double = key.replace('@', '__')
+                                    query_result[new_key_double] = query_result[key]
+                                    
+                                elif '_at_' in key:
+                                    # Convert p_at_5 -> p__5 and p@5
+                                    new_key_double = key.replace('_at_', '__')
+                                    query_result[new_key_double] = query_result[key]
+                                    new_key_old = key.replace('_at_', '@')
+                                    query_result[new_key_old] = query_result[key]
+                                    
+                                elif '__' in key:
+                                    # Convert p__5 -> p_at_5 and p@5
+                                    new_key_at = key.replace('__', '_at_')
+                                    query_result[new_key_at] = query_result[key]
+                                    new_key_old = key.replace('__', '@')
+                                    query_result[new_key_old] = query_result[key]
                 return data
-        except:
+        except Exception as e:
+            print(f"[Eval Cache] Error: {e}")
             return None
     return None
 
@@ -316,6 +348,8 @@ def index():
 def evaluation():
     """Evaluation page - show metrics for all models"""
     cached_results = load_eval_cache()
+    if not isinstance(cached_results, dict):
+        cached_results = None
     return render_template('evaluation.html', results=cached_results, from_cache=cached_results is not None)
 
 
