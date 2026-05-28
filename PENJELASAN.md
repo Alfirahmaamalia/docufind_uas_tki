@@ -1,7 +1,7 @@
 # 📚 STKI - SISTEM TEMU KEMBALI INFORMASI
 ## Dokumentasi Lengkap & Panduan Implementasi
 
-**Mata Kuliah**: Temu Kembali Informasi (COM620321)  
+**Mata Kuliah**: Temu Kembali Informasi (DocuFind)  
 **Universitas**: Universitas Lampung - FMIPA  
 **Periode**: 2025-2026 Genap  
 **Tipe Proyek**: Project-Based Learning  
