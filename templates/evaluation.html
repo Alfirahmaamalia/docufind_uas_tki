@@ -8,6 +8,15 @@
     <div class="eval-header">
         <h1>Dashboard Evaluasi Performa</h1>
         <p>Analisis perbandingan metrik efektivitas untuk model SBERT, TF-IDF, dan BM25 berdasarkan 12 Query Ground Truth secara dinamis.</p>
+        
+        <!-- Top K Selector -->
+        <div class="eval-top-k-selector" style="margin-top: 1.5rem; display: flex; gap: 10px; justify-content: center; align-items: center;">
+            <label for="evalTopK" style="font-weight: 600; color: var(--text-secondary);">Tampilkan Top:</label>
+            <select id="evalTopK" style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 0.95rem; background: var(--surface); cursor: pointer;">
+                <option value="5" {% if top_k == 5 %}selected{% endif %}>Top 5</option>
+                <option value="10" {% if top_k == 10 %}selected{% endif %}>Top 10</option>
+            </select>
+        </div>
     </div>
 
     {% if results %}
@@ -31,7 +40,7 @@
                         {% else %}
                             {% set border_color = '#10b981' %}
                         {% endif %}
-                        <div class="summary-card" style="position: relative; overflow: hidden; border-top: 4px solid {{ border_color }};">
+                        <div class="summary-card" data-border-color="{{ border_color }}">
                             <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">{{ model.icon }}</div>
                             <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">{{ res.get('model_name', 'Unknown Model') }}</h3>
                             
@@ -45,7 +54,7 @@
                                     {% else %}
                                         {% set color_val = '#059669' %}
                                     {% endif %}
-                                    <div style="font-size: 1.25rem; font-weight: 800; color: {{ color_val }};">{{ res.get('map', 0.0) }}</div>
+                                    <div style="font-size: 1.25rem; font-weight: 800;" data-color="{{ color_val }}">{{ res.get('map', 0.0) }}</div>
                                 </div>
                                 <div style="background: var(--gray-50); padding: 8px; border-radius: 6px; text-align: center;">
                                     <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Avg P@10</div>
@@ -91,7 +100,7 @@
                                             {% else %}
                                                 {% set gradient_bg = 'linear-gradient(90deg, #34d399, #059669)' %}
                                             {% endif %}
-                                            <div class="eval-bar-fill" style="width: {{ (res.get('map', 0.0)|float * 100)|round }}%; background: {{ gradient_bg }};"></div>
+                                            <div class="eval-bar-fill" data-gradient="{{ gradient_bg }}" data-width="{{ (res.get('map', 0.0)|float * 100)|round }}"></div>
                                         </div>
                                     </div>
                                     <div class="eval-bar-value" style="color: var(--text-primary); padding-top: 12px; min-width: 45px;">{{ res.get('map', 0.0) }}</div>
@@ -101,7 +110,7 @@
                                     <div class="eval-bar-col">
                                         <div style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px;">NDCG@10</div>
                                         <div class="eval-bar-track">
-                                            <div class="eval-bar-fill" style="width: {{ (ndcg_val * 100)|round }}%; background: #94a3b8;"></div>
+                                            <div class="eval-bar-fill" style="background: #94a3b8;" data-width="{{ (ndcg_val * 100)|round }}"></div>
                                         </div>
                                     </div>
                                     <div class="eval-bar-value" style="color: var(--text-secondary); padding-top: 12px; min-width: 45px;">{{ ndcg_val }}</div>
@@ -140,7 +149,7 @@
                         {% else %}
                             {% set tab_display = 'none' %}
                         {% endif %}
-                        <div class="eval-table-wrapper tab-content fade-in" id="tab-{{ model.key }}" style="display: {{ tab_display }};">
+                        <div class="eval-table-wrapper tab-content fade-in" id="tab-{{ model.key }}" data-display="{{ tab_display }}">
                             <div style="padding: 15px; background: var(--gray-50); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0;">
                                     {{ res.get('model_name', 'Unknown Model') }} — Rincian 12 Query Ground Truth
@@ -290,6 +299,67 @@
         }
     }
 
+    // Initialize tab display and bar widths on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Apply border colors from data-border-color attributes
+        const summaryCards = document.querySelectorAll('.summary-card[data-border-color]');
+        summaryCards.forEach(card => {
+            const color = card.getAttribute('data-border-color');
+            if (color) {
+                card.style.borderTopColor = color;
+            }
+        });
+
+        // Apply colors from data-color attributes
+        const coloredDivs = document.querySelectorAll('[data-color]');
+        coloredDivs.forEach(div => {
+            const color = div.getAttribute('data-color');
+            if (color) {
+                div.style.color = color;
+            }
+        });
+
+        // Apply gradients from data-gradient attributes
+        const barFills = document.querySelectorAll('.eval-bar-fill[data-gradient]');
+        barFills.forEach(bar => {
+            const gradient = bar.getAttribute('data-gradient');
+            if (gradient) {
+                bar.style.background = gradient;
+            }
+        });
+
+        // Set initial tab display
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(tab => {
+            const display = tab.getAttribute('data-display');
+            if (display) {
+                tab.style.display = display;
+            }
+        });
+
+        // Set bar widths from data attributes
+        const barWidths = document.querySelectorAll('.eval-bar-fill[data-width]');
+        barWidths.forEach(bar => {
+            const width = bar.getAttribute('data-width');
+            if (width) {
+                setTimeout(() => {
+                    bar.style.width = width + '%';
+                }, 100);
+            }
+        });
+    });
+
+    // Top K selector change handler
+    const evalTopKSelect = document.getElementById('evalTopK');
+    if (evalTopKSelect) {
+        evalTopKSelect.addEventListener('change', (e) => {
+            const topK = e.target.value;
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('top_k', topK);
+            window.location.href = currentUrl.toString();
+        });
+    }
+
     // Run evaluation script
     const runEvalBtn = document.getElementById('runEvalBtn');
     const loadingOverlay = document.getElementById('evalLoadingOverlay');
@@ -300,6 +370,10 @@
             if (loadingOverlay) {
                 loadingOverlay.classList.add('active');
             }
+            
+            // Get selected top_k value
+            const topKSelect = document.getElementById('evalTopK');
+            const topK = topKSelect ? parseInt(topKSelect.value) : 10;
             
             // Subtle loading text animation
             const messages = [
@@ -325,7 +399,8 @@
             try {
                 const response = await fetch('/api/run-evaluation', { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ top_k: topK })
                 });
                 
                 clearInterval(textInterval);

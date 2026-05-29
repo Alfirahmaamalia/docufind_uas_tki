@@ -19,6 +19,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 # pyrefly: ignore [missing-import]
 from rank_bm25 import BM25Okapi
 
+# NOTE: sentence_transformers is imported lazily in SBERTRetriever.load()
+# to avoid hanging during module import on some systems
+
 # Add parent directory to path for config import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -1054,6 +1057,10 @@ def run_full_evaluation(ir_system, fetch_papers_func=None, top_k=10):
         num_queries = len(queries_results)
         results[model_key]['num_queries'] = num_queries
         
+        # ⚠️ Alert if fewer than 12 queries were evaluated
+        if num_queries < 12:
+            print(f"\n⚠️  WARNING: {model_key.upper()} only evaluated {num_queries}/12 queries!")
+        
         if num_queries > 0:
             avg_map = sum(q['ap'] for q in queries_results) / num_queries
             avg_p10 = sum(q['p_at_10'] for q in queries_results) / num_queries
@@ -1067,11 +1074,12 @@ def run_full_evaluation(ir_system, fetch_papers_func=None, top_k=10):
             results[model_key]['avg_f1_at_10'] = round(avg_f1, 4)
             results[model_key]['avg_ndcg_at_10'] = round(avg_ndcg, 4)
         
-        print(f"\n--- {models[model_key]} Averages ---")
-        print(f"  MAP      : {results[model_key]['map']:.4f}")
-        print(f"  Avg P@10 : {results[model_key]['avg_p_at_10']:.4f}")
-        print(f"  Avg R@10 : {results[model_key]['avg_r_at_10']:.4f}")
-        print(f"  Avg NDCG : {results[model_key]['avg_ndcg_at_10']:.4f}")
+        print(f"\n--- {models[model_key]} Averages (top_k={top_k}) ---")
+        print(f"  Queries   : {num_queries}/12")
+        print(f"  MAP       : {results[model_key]['map']:.4f}")
+        print(f"  Avg P@10  : {results[model_key]['avg_p_at_10']:.4f}")
+        print(f"  Avg R@10  : {results[model_key]['avg_r_at_10']:.4f}")
+        print(f"  Avg NDCG  : {results[model_key]['avg_ndcg_at_10']:.4f}")
 
     # Store in SQLite for caching
     try:
@@ -1096,14 +1104,26 @@ def run_full_evaluation(ir_system, fetch_papers_func=None, top_k=10):
     except Exception as e:
         print(f"[Eval] SQLite save warning: {e}")
     
+    # Final validation summary
+    print("\n" + "="*50)
+    print(f"  ✅ EVALUATION COMPLETE (top_k={top_k})")
+    for model_key in models:
+        num_q = len(results[model_key].get('per_query', []))
+        status = "✓" if num_q == 12 else "⚠️"
+        print(f"  {status} {models[model_key]:<30}: {num_q}/12 queries")
+    print("="*50 + "\n")
+    
     return results
 
 
-# Singleton instance
-_ir_system = IRSystem()
+# Singleton instance (lazy-loaded)
+_ir_system = None
 
 def get_ir_system():
-    """Get singleton IR system instance"""
+    """Get singleton IR system instance (lazy-loaded)"""
+    global _ir_system
+    if _ir_system is None:
+        _ir_system = IRSystem()
     return _ir_system
 
 

@@ -209,13 +209,17 @@ def format_authors(authors_list):
 
 
 # ========== EVALUATION CACHING ==========
-EVAL_CACHE_FILE = os.path.join(CACHE_DIR, 'evaluation_results.json')
+# Evaluation cache file (will include top_k in filename)
+def get_eval_cache_file(top_k=10):
+    """Get evaluation cache file path for specific top_k value"""
+    return os.path.join(CACHE_DIR, f'evaluation_results_top{top_k}.json')
 
-def load_eval_cache():
+def load_eval_cache(top_k=10):
     """Load cached evaluation results from JSON file and normalize keys for Jinja2"""
-    if os.path.exists(EVAL_CACHE_FILE):
+    cache_file = get_eval_cache_file(top_k)
+    if os.path.exists(cache_file):
         try:
-            with open(EVAL_CACHE_FILE, 'r', encoding='utf-8') as f:
+            with open(cache_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 
                 # Standardize keys dynamically for Jinja2 template compatibility
@@ -270,11 +274,13 @@ def load_eval_cache():
             return None
     return None
 
-def save_eval_cache(data):
-    """Save evaluation results to cache"""
+def save_eval_cache(data, top_k=10):
+    """Save evaluation results to cache with top_k specific filename"""
     try:
-        with open(EVAL_CACHE_FILE, 'w', encoding='utf-8') as f:
+        cache_file = get_eval_cache_file(top_k)
+        with open(cache_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"[Eval Cache] Saved evaluation results (top_k={top_k}) to {cache_file}")
     except Exception as e:
         print(f"[Eval Cache] Warning: {e}")
 
@@ -308,9 +314,17 @@ def index():
                     print(f"[API] Fetched {len(papers)} papers")
                     results = ir_system.retrieve(query, papers, model_name=model, top_k=top_k)
                     
+                    # Map model code to display name
+                    model_display = {
+                        'sbert': 'SBERT (Semantic)',
+                        'tfidf': 'TF-IDF (Vector Space)',
+                        'bm25': 'BM25 (Probabilistic)'
+                    }.get(model, model)
+                    
                     details = {
                         'original_query': query,
                         'model': model,
+                        'model_name': model_display,
                         'top_k': top_k,
                         'total_papers_fetched': len(papers),
                         'num_results': len(results),
@@ -347,10 +361,15 @@ def index():
 @app.route('/evaluation', methods=['GET'])
 def evaluation():
     """Evaluation page - show metrics for all models"""
-    cached_results = load_eval_cache()
+    top_k = request.args.get('top_k', 10, type=int)
+    if top_k not in [5, 10]:
+        top_k = 10
+    
+    cached_results = load_eval_cache(top_k)
     if not isinstance(cached_results, dict):
         cached_results = None
-    return render_template('evaluation.html', results=cached_results, from_cache=cached_results is not None)
+    
+    return render_template('evaluation.html', results=cached_results, from_cache=cached_results is not None, top_k=top_k, top_k_options=[5, 10])
 
 
 @app.route('/api/run-evaluation', methods=['POST'])
@@ -359,12 +378,29 @@ def api_run_evaluation():
     try:
         print("\n[Evaluation] Generating evaluation results...")
         
-        # Call run_full_evaluation from integrated_ir_system
-        results = run_full_evaluation(ir_system, fetch_papers_func=fetch_papers, top_k=10)
+        # Get top_k from request
+        top_k = request.json.get('top_k', 10) if request.json else 10
+        if top_k not in [5, 10]:
+            top_k = 10
         
-        # Save to cache
-        save_eval_cache(results)
-        print("[Evaluation] OK - Evaluation results generated and saved!")
+        print(f"[Evaluation] Running evaluation with top_k={top_k}...")
+        
+        # Call run_full_evaluation from integrated_ir_system
+        results = run_full_evaluation(ir_system, fetch_papers_func=fetch_papers, top_k=top_k)
+        
+        # Verify evaluation completed properly
+        if not results or not any(results.get(m, {}).get('per_query') for m in ['sbert', 'tfidf', 'bm25']):
+            print(f"[Evaluation] ⚠️ WARNING: Evaluation returned empty results!")
+            return jsonify({'status': 'error', 'message': 'Evaluation produced no results'}), 500
+        else:
+            # Count queries that were evaluated for each model
+            for model_key in results:
+                query_count = len(results[model_key].get('per_query', []))
+                print(f"[Evaluation] ✓ {model_key.upper()}: {query_count} queries evaluated")
+        
+        # Save to cache with top_k in filename
+        save_eval_cache(results, top_k)
+        print(f"[Evaluation] ✓ Saved evaluation results (top_k={top_k}) to cache!")
         return jsonify({'status': 'success', 'data': results})
     except Exception as e:
         print(f"[Evaluation Error] {str(e)}")
