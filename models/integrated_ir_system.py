@@ -120,6 +120,7 @@ class SBERTRetriever:
     def retrieve(self, query, documents, top_k=10):
         """
         Retrieve top-k documents using SBERT + Cosine Similarity with enhanced scoring
+        Falls back to TF-IDF if SBERT model is not available
         
         Args:
             query: Search query string
@@ -131,6 +132,19 @@ class SBERTRetriever:
         """
         if not documents or not query.strip():
             return []
+        
+        # Check if model is available, fallback to TF-IDF if not
+        if self._model is None:
+            print("[SBERT] Model not available, using TF-IDF fallback")
+            # Import here to avoid circular imports
+            from models.integrated_ir_system import TFIDFRetriever
+            tfidf = TFIDFRetriever()
+            doc_texts = [
+                preprocess(f"{d.get('title', '')} {d.get('abstract', '')}")
+                for d in documents
+            ]
+            tfidf.fit(doc_texts)
+            return tfidf.retrieve(query, documents, top_k)
         
         # Prepare document texts
         doc_texts = []
@@ -528,10 +542,15 @@ class IRSystem:
         print("\n[IR System] ✓ All models trained successfully!")
     
     def load_models(self):
-        """Backward compatibility: load just SBERT"""
+        """Backward compatibility: load just SBERT with graceful fallback"""
         print("[IR System] Loading SBERT model...")
-        self.sbert.load()
-        print("[IR System] SBERT loaded.")
+        try:
+            self.sbert.load()
+            print("[IR System] ✓ SBERT loaded successfully.")
+        except Exception as e:
+            print(f"[IR System] ⚠️ WARNING: SBERT failed to load: {e}")
+            print("[IR System] SBERT will use fallback (TF-IDF similarity) when requested")
+            self.sbert._model = None  # Mark as failed
     
     def retrieve(self, query, documents, model_name='sbert', top_k=10):
         """
