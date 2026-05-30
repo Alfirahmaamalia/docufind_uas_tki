@@ -1182,7 +1182,7 @@ def get_model_status(model_name):
 def main():
     """Main training script - can be run standalone: python models/integrated_ir_system.py"""
     print("\n" + "="*70)
-    print("  🚀 STKI - Model Training & Initialization")
+    print("  DocuFind - Model Training & Initialization")
     print("  Sistem Temu Kembali Informasi - Training Models")
     print("="*70 + "\n")
     

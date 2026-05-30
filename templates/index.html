@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}STKI - Pencarian Artikel Ilmiah{% endblock %}
+{% block title %}DocuFind - Pencarian Artikel Ilmiah{% endblock %}
 {% block meta_desc %}Cari artikel ilmiah menggunakan SBERT, TF-IDF, atau BM25 dari Semantic Scholar.{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="hero fade-in-up">
-    <h1 class="hero-title">🔍 Semantic Scholar Search</h1>
+    <h1 class="hero-title"><i class="fas fa-search"></i> Semantic Scholar Search</h1>
     <p class="hero-subtitle">
         Temukan artikel ilmiah bidang <strong>Artificial Intelligence</strong> dengan 
         <strong>3 model berbeda</strong>: SBERT, TF-IDF, dan BM25 untuk hasil yang akurat.
@@ -24,7 +24,7 @@
         <form class="search-form" id="searchForm" method="POST" action="/">
             <div class="search-input-row">
                 <div class="search-input-wrapper">
-                    <span class="search-icon">🔍</span>
+                    <i class="fas fa-search search-icon"></i>
                     <input 
                         type="text" 
                         class="search-input" 
@@ -55,7 +55,7 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary" id="searchBtn">
-                    <span>🔎</span> Cari
+                    <i class="fas fa-magnifying-glass"></i> Cari
                 </button>
             </div>
         </form>
@@ -75,9 +75,9 @@
     <div class="results-header">
         <h2>Hasil Pencarian untuk "<em>{{ query }}</em>"</h2>
         <div class="results-meta">
-            <span class="meta-tag">📄 {{ details.total_papers_fetched }} paper diambil</span>
-            <span class="meta-tag">🎯 {{ details.num_results }} hasil ditampilkan</span>
-            <span class="meta-tag">🤖 {{ details.model_name }}</span>
+            <span class="meta-tag"><i class="fas fa-file"></i> {{ details.total_papers_fetched }} paper diambil</span>
+            <span class="meta-tag"><i class="fas fa-bullseye"></i> {{ details.num_results }} hasil ditampilkan</span>
+            <span class="meta-tag"><i class="fas fa-microchip"></i> {{ details.model_name }}</span>
         </div>
     </div>
 
@@ -90,13 +90,13 @@
                     <a href="{{ paper.url or '#' }}" target="_blank" rel="noopener" class="paper-title">{{ paper.title }}</a>
                     <div class="paper-meta">
                         <span class="paper-meta-item">
-                            <span class="meta-icon">👤</span> {% if paper.authors is iterable and paper.authors is not string %}{{ paper.authors | join(', ') }}{% else %}{{ paper.authors }}{% endif %}
+                            <i class="fas fa-user"></i> {% if paper.authors is iterable and paper.authors is not string %}{{ paper.authors | join(', ') }}{% else %}{{ paper.authors }}{% endif %}
                         </span>
                         <span class="paper-meta-item">
-                            <span class="meta-icon">📅</span> {{ paper.year if paper.year else 'N/A' }}
+                            <i class="fas fa-calendar"></i> {{ paper.year if paper.year else 'N/A' }}
                         </span>
                         <span class="paper-meta-item">
-                            <span class="meta-icon">📝</span> {{ paper.citationCount }} sitasi
+                            <i class="fas fa-quote-right"></i> {{ paper.citationCount }} sitasi
                         </span>
                     </div>
                 </div>
@@ -111,7 +111,7 @@
                     <span class="score-value">{{ paper.similarityScore }}</span>
                 </div>
                 <a href="{{ paper.url or '#' }}" target="_blank" rel="noopener" class="btn-open-paper" {% if not paper.url %}onclick="return false;"{% endif %}>
-                    📄 Buka Paper
+                    <i class="fas fa-file-pdf"></i> Buka Paper
                 </a>
             </div>
         </div>
@@ -120,14 +120,14 @@
 
     {% elif query %}
     <div class="empty-state">
-        <div class="empty-icon">🔎</div>
+        <div class="empty-icon"><i class="fas fa-magnifying-glass"></i></div>
         <h3>Tidak ditemukan hasil</h3>
         <p>Tidak ada artikel yang cocok dengan query "<strong>{{ query }}</strong>". Coba gunakan kata kunci yang lebih umum atau berbeda.</p>
     </div>
 
     {% else %}
     <div class="empty-state">
-        <div class="empty-icon">📚</div>
+        <div class="empty-icon"><i class="fas fa-book"></i></div>
         <h3>Mulai Pencarian</h3>
         <p>Masukkan kata kunci untuk menemukan artikel ilmiah AI dari Semantic Scholar menggunakan SBERT, TF-IDF, atau BM25.</p>
     </div>
@@ -138,7 +138,7 @@
 <section class="info-section fade-in-up" style="animation-delay: 0.3s;">
     <div class="info-grid">
         <div class="info-card">
-            <h3><span class="info-icon">🧠</span> 3 Models</h3>
+            <h3><i class="fas fa-brain"></i> 3 Models</h3>
             <ul class="info-list">
                 <li><strong>SBERT:</strong> Neural semantic search</li>
                 <li><strong>TF-IDF:</strong> Vector space model</li>
@@ -147,7 +147,7 @@
             </ul>
         </div>
         <div class="info-card">
-            <h3><span class="info-icon">⚙️</span> Preprocessing</h3>
+            <h3><i class="fas fa-gear"></i> Preprocessing</h3>
             <ul class="info-list">
                 <li>Case folding (lowercase)</li>
                 <li>Remove punctuation</li>
@@ -156,7 +156,7 @@
             </ul>
         </div>
         <div class="info-card">
-            <h3><span class="info-icon">📊</span> Pipeline</h3>
+            <h3><i class="fas fa-chart-bar"></i> Pipeline</h3>
             <ul class="info-list">
                 <li>Input query → Preprocessing</li>
                 <li>Fetch papers (Semantic Scholar API)</li>
@@ -184,7 +184,7 @@
                 }
                 loadingOverlay.classList.add('active');
                 searchBtn.disabled = true;
-                searchBtn.innerHTML = '<span>⏳</span> Mencari...';
+                searchBtn.innerHTML = '<i class="fas fa-hourglass-end"></i> Mencari...';
             });
         }
 
@@ -192,7 +192,7 @@
             loadingOverlay.classList.remove('active');
             if (searchBtn) {
                 searchBtn.disabled = false;
-                searchBtn.innerHTML = '<span>🔎</span> Cari';
+                searchBtn.innerHTML = '<i class="fas fa-magnifying-glass"></i> Cari';
             }
         });
     });

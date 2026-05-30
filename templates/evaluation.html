@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}STKI - Evaluasi Performa Sistem{% endblock %}
+{% block title %}DocuFind - Evaluasi Performa Sistem{% endblock %}
 {% block meta_desc %}Evaluasi performa sistem retrieval STKI untuk SBERT, TF-IDF, dan BM25 secara dinamis dan real-time.{% endblock %}
 
 {% block content %}
@@ -25,9 +25,9 @@
             <!-- Model Overview Cards -->
             <div class="eval-summary">
                 {% set models_info = [
-                    {'key': 'sbert', 'name': 'SBERT (Semantic)', 'gradient': 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 'icon': '🧠'},
-                    {'key': 'bm25', 'name': 'BM25 (Probabilistic)', 'gradient': 'linear-gradient(135deg, #7c3aed, #6d28d9)', 'icon': '🎯'},
-                    {'key': 'tfidf', 'name': 'TF-IDF (Vector Space)', 'gradient': 'linear-gradient(135deg, #10b981, #047857)', 'icon': '📊'}
+                    {'key': 'sbert', 'name': 'SBERT (Semantic)', 'gradient': 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 'icon': '<i class="fas fa-brain"></i>'},
+                    {'key': 'bm25', 'name': 'BM25 (Probabilistic)', 'gradient': 'linear-gradient(135deg, #7c3aed, #6d28d9)', 'icon': '<i class="fas fa-bullseye"></i>'},
+                    {'key': 'tfidf', 'name': 'TF-IDF (Vector Space)', 'gradient': 'linear-gradient(135deg, #10b981, #047857)', 'icon': '<i class="fas fa-chart-bar"></i>'}
                 ] %}
                 
                 {% for model in models_info %}
@@ -41,7 +41,7 @@
                             {% set border_color = '#10b981' %}
                         {% endif %}
                         <div class="summary-card" data-border-color="{{ border_color }}">
-                            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">{{ model.icon }}</div>
+                            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">{{ model.icon | safe }}</div>
                             <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">{{ res.get('model_name', 'Unknown Model') }}</h3>
                             
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
@@ -79,7 +79,7 @@
 
             <!-- Model Performance Chart Visual Comparison -->
             <div class="info-card eval-chart-box" style="margin-bottom: 2.5rem;">
-                <h3 class="eval-chart-title">📊 Perbandingan Visual MAP & NDCG@10</h3>
+                <h3 class="eval-chart-title"><i class="fas fa-chart-bar"></i> Perbandingan Visual MAP & NDCG@10</h3>
                 <div class="eval-chart-rows">
                     {% for model in models_info %}
                         {% if model.key in results %}
@@ -133,12 +133,12 @@
 
             <!-- Detailed Table for Each Model -->
             <div style="margin-top: 30px;">
-                <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem;">📋 Hasil Evaluasi Query Detail</h2>
+                <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem;"><i class="fas fa-list-check"></i> Hasil Evaluasi Query Detail</h2>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button class="btn btn-secondary btn-sm active" id="btn-tab-sbert" onclick="switchTab('sbert')">🧠 SBERT (Semantic)</button>
-                    <button class="btn btn-secondary btn-sm" id="btn-tab-bm25" onclick="switchTab('bm25')">🎯 BM25 (Probabilistic)</button>
-                    <button class="btn btn-secondary btn-sm" id="btn-tab-tfidf" onclick="switchTab('tfidf')">📊 TF-IDF (Vector Space)</button>
+                    <button class="btn btn-secondary btn-sm active" id="btn-tab-sbert" onclick="switchTab('sbert')"><i class="fas fa-brain"></i> SBERT (Semantic)</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-tab-bm25" onclick="switchTab('bm25')"><i class="fas fa-bullseye"></i> BM25 (Probabilistic)</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-tab-tfidf" onclick="switchTab('tfidf')"><i class="fas fa-chart-bar"></i> TF-IDF (Vector Space)</button>
                 </div>
 
                 {% for model in models_info %}
@@ -246,17 +246,17 @@
             <div style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.5); border-radius: var(--border-radius-md); border: 1px dashed var(--border-color);">
                 <h4 style="font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Ingin memperbarui hasil evaluasi?</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Proses ini akan menjalankan retrieval ulang secara real-time ke API Semantic Scholar untuk kueri ground truth.</p>
-                <button class="btn btn-primary" id="runEvalBtn">🔄 Regenerate Evaluation</button>
+                <button class="btn btn-primary" id="runEvalBtn"><i class="fas fa-rotate-right"></i> Regenerate Evaluation</button>
             </div>
         </div>
         
     {% else %}
         <!-- Empty State -->
         <div class="no-results" style="max-width: 500px; margin: 40px auto; background: var(--surface); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 50px 30px; box-shadow: var(--shadow-lg);">
-            <div class="empty-icon" style="font-size: 3.5rem; margin-bottom: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.05);">📊</div>
+            <div class="empty-icon" style="font-size: 3.5rem; margin-bottom: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.05);"><i class="fas fa-chart-bar"></i></div>
             <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">Evaluasi Performa Belum Dijalankan</h3>
             <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 25px;">Sistem perlu melakukan pencarian artikel secara langsung via API untuk menghitung metrik P@K, Recall, MAP, dan NDCG secara akurat.</p>
-            <button class="btn btn-primary" id="runEvalBtn" style="padding: 12px 30px;">⚡ Generate Real Evaluation</button>
+            <button class="btn btn-primary" id="runEvalBtn" style="padding: 12px 30px;"><i class="fas fa-bolt"></i> Generate Real Evaluation</button>
         </div>
     {% endif %}
 </section>

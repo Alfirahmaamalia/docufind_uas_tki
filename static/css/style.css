@@ -209,6 +209,13 @@ a:hover {
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
+.navbar-brand .logo-icon > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
 .navbar-nav {
     display: flex;
     align-items: center;
@@ -224,6 +231,15 @@ a:hover {
     font-size: 0.9rem;
     transition: all var(--transition-fast);
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-link > i {
+    display: inline-flex;
+    align-items: center;
+    font-size: 1rem;
 }
 
 .nav-link:hover {
@@ -261,6 +277,13 @@ a:hover {
     font-weight: 500;
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.author-badge > i {
+    font-size: 0.85rem;
 }
 
 /* --- Hero Section --- */
@@ -295,7 +318,7 @@ a:hover {
     gap: 10px;
     justify-content: center;
     flex-wrap: wrap;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1rem;
 }
 
 .tech-badge {
@@ -486,6 +509,12 @@ a:hover {
     white-space: nowrap;
 }
 
+.btn > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
     color: white;
@@ -607,6 +636,36 @@ a:hover {
     font-weight: 500;
 }
 
+.results-meta .meta-tag:nth-child(1) {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.results-meta .meta-tag:nth-child(1) i {
+    color: #3b82f6;
+}
+
+.results-meta .meta-tag:nth-child(2) {
+    background: #ede9fe;
+    border: 1.5px solid #a78bfa;
+    color: #6d28d9;
+}
+
+.results-meta .meta-tag:nth-child(2) i {
+    color: #7c3aed;
+}
+
+.results-meta .meta-tag:nth-child(3) {
+    background: #d1fae5;
+    border-color: #a7f3d0;
+    color: #047857;
+}
+
+.results-meta .meta-tag:nth-child(3) i {
+    color: #10b981;
+}
+
 /* --- Paper Card --- */
 .paper-card {
     background: var(--surface);
@@ -703,6 +762,12 @@ a:hover {
 .paper-meta-item .meta-icon {
     font-size: 0.9rem;
     opacity: 0.7;
+}
+
+.paper-meta-item > i {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-right: 2px;
 }
 
 .paper-abstract {
@@ -817,6 +882,11 @@ a:hover {
     opacity: 0.5;
 }
 
+.empty-icon > i {
+    display: inline-block;
+    font-size: 4rem;
+}
+
 .empty-state h3 {
     font-size: 1.2rem;
     font-weight: 600;
@@ -850,6 +920,31 @@ a:hover {
     padding: 1.25rem;
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
+    border-top: 3px solid var(--border-color);
+}
+
+.info-card:nth-child(1) {
+    border-top: 3px solid #3b82f6;
+}
+
+.info-card:nth-child(1) h3 > i {
+    color: #3b82f6;
+}
+
+.info-card:nth-child(2) {
+    border-top: 3px solid #7c3aed;
+}
+
+.info-card:nth-child(2) h3 > i {
+    color: #7c3aed;
+}
+
+.info-card:nth-child(3) {
+    border-top: 3px solid #10b981;
+}
+
+.info-card:nth-child(3) h3 > i {
+    color: #10b981;
 }
 
 .info-card:hover {
@@ -871,6 +966,13 @@ a:hover {
     font-size: 1.2rem;
 }
 
+.info-card > h3 > i {
+    font-size: 1.2rem;
+    margin-right: 6px;
+    display: inline-flex;
+    align-items: center;
+}
+
 .info-list {
     list-style: none;
 }
@@ -882,6 +984,30 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.info-list li::before {
+    content: '✓';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+.info-card:nth-child(1) .info-list li::before {
+    color: #3b82f6;
+}
+
+.info-card:nth-child(2) .info-list li::before {
+    color: #7c3aed;
+}
+
+.info-card:nth-child(3) .info-list li::before {
+    color: #10b981;
 }
 
 .info-list li::before {
@@ -984,6 +1110,37 @@ a:hover {
     position: relative;
     overflow: hidden;
     border-top: 4px solid #ccc;
+}
+
+.summary-card[data-border-color="#3b82f6"] {
+    border-top: 4px solid #3b82f6;
+}
+
+.summary-card[data-border-color="#3b82f6"] > div:first-child {
+    color: #3b82f6;
+}
+
+.summary-card[data-border-color="#7c3aed"] {
+    border-top: 4px solid #7c3aed;
+}
+
+.summary-card[data-border-color="#7c3aed"] > div:first-child {
+    color: #7c3aed;
+}
+
+.summary-card[data-border-color="#10b981"] {
+    border-top: 4px solid #10b981;
+}
+
+.summary-card[data-border-color="#10b981"] > div:first-child {
+    color: #10b981;
+}
+
+.summary-card > div:first-child > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
 }
 
 .summary-card::before {
