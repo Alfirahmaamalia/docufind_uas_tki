@@ -163,20 +163,28 @@ class SBERTRetriever:
         query_embedding_2d = query_embedding.reshape(1, -1)
         similarities = cosine_similarity(query_embedding_2d, doc_embeddings).flatten()
         
+        # Filter out documents with very low base similarity
+        # This prevents irrelevant papers from appearing due to citation/recency boosts
+        MIN_BASE_SIMILARITY = 0.15
+        
         # Enhance scores with citation count and keyword matching
         enhanced_scores = self._enhance_scores(similarities, query, documents)
         
         # Rank
         ranked_indices = np.argsort(enhanced_scores)[::-1]
         
-        # Build results
+        # Build results - only include papers above minimum base similarity threshold
         results = []
-        for rank_num, idx in enumerate(ranked_indices[:top_k], start=1):
+        for idx in ranked_indices:
+            if similarities[idx] < MIN_BASE_SIMILARITY:
+                continue
+            if len(results) >= top_k:
+                break
             doc = documents[idx]
             score = float(enhanced_scores[idx])
             
             results.append({
-                'rank': rank_num,
+                'rank': len(results) + 1,
                 'title': doc.get('title', 'Untitled'),
                 'abstract': doc.get('abstract', '')[:300],
                 'abstractFull': doc.get('abstract', ''),
@@ -302,20 +310,28 @@ class TFIDFRetriever:
         # Similarity
         similarities = cosine_similarity(query_vector, doc_vectors).flatten()
         
+        # Filter out documents with zero base TF-IDF similarity
+        # This prevents irrelevant papers from appearing due to citation/recency boosts
+        MIN_BASE_SIMILARITY = 0.01
+        
         # Enhance scores with citation and title keyword matching
         enhanced_scores = self._enhance_tfidf_scores(similarities, query, documents)
         
         # Rank
         ranked_indices = np.argsort(enhanced_scores)[::-1]
         
-        # Build results
+        # Build results - only include papers above minimum base similarity threshold
         results = []
-        for rank_num, idx in enumerate(ranked_indices[:top_k], start=1):
+        for idx in ranked_indices:
+            if similarities[idx] < MIN_BASE_SIMILARITY:
+                continue
+            if len(results) >= top_k:
+                break
             doc = documents[idx]
             score = float(enhanced_scores[idx])
             
             results.append({
-                'rank': rank_num,
+                'rank': len(results) + 1,
                 'title': doc.get('title', 'Untitled'),
                 'abstract': doc.get('abstract', '')[:300],
                 'abstractFull': doc.get('abstract', ''),
@@ -414,20 +430,28 @@ class BM25Retriever:
         # Get scores
         scores = self.model.get_scores(query_tokens)
         
+        # Filter out documents with zero BM25 base score
+        # This prevents irrelevant papers from appearing due to citation/recency boosts
+        MIN_BASE_SCORE = 0.01
+        
         # Enhance scores with citation and title keyword matching
         enhanced_scores = self._enhance_bm25_scores(scores, query, documents)
         
         # Rank
         ranked_indices = np.argsort(enhanced_scores)[::-1]
         
-        # Build results
+        # Build results - only include papers above minimum base score threshold
         results = []
-        for rank_num, idx in enumerate(ranked_indices[:top_k], start=1):
+        for idx in ranked_indices:
+            if scores[idx] < MIN_BASE_SCORE:
+                continue
+            if len(results) >= top_k:
+                break
             doc = documents[idx]
             score = float(enhanced_scores[idx])
             
             results.append({
-                'rank': rank_num,
+                'rank': len(results) + 1,
                 'title': doc.get('title', 'Untitled'),
                 'abstract': doc.get('abstract', '')[:300],
                 'abstractFull': doc.get('abstract', ''),
