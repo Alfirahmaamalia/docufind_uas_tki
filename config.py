@@ -4,6 +4,7 @@ Uses SQLite for model caching and evaluation results
 """
 import os
 import sqlite3
+import tempfile
 
 # --- SBERT Model ---
 SBERT_MODEL_NAME = 'all-MiniLM-L6-v2'
