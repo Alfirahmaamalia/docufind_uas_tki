@@ -7,7 +7,7 @@
 <section class="hero fade-in-up">
     <h1 class="hero-title"><i class="fas fa-search"></i> Semantic Scholar Search</h1>
     <p class="hero-subtitle">
-        Temukan artikel ilmiah bidang <strong>Artificial Intelligence</strong> dengan 
+        Temukan artikel ilmiah bidang <strong>Machine Learning</strong> dengan 
         <strong>3 model berbeda</strong>: SBERT, TF-IDF, dan BM25 untuk hasil yang akurat.
     </p>
     <div class="hero-badges">
@@ -51,7 +51,7 @@
                     <select id="topK" name="top_k">
                         <option value="5" {% if top_k == 5 %}selected{% endif %}>Top 5</option>
                         <option value="10" {% if top_k == 10 %}selected{% endif %}>Top 10</option>
-                        <option value="20" {% if top_k == 20 %}selected{% endif %}>Top 20</option>
+                        <!-- <option value="20" {% if top_k == 20 %}selected{% endif %}>Top 20</option> -->
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary" id="searchBtn">
