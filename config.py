@@ -18,14 +18,12 @@ DEFAULT_TOP_K = 10
 TOP_K_OPTIONS = [5, 10, 20]
 
 # --- File & Database Structure ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(BASE_DIR, 'cache')
-DB_PATH = os.path.join(CACHE_DIR, 'stki.db')  # SQLite database
-
-# Ensure cache directory exists
+CACHE_DIR = os.path.join(tempfile.gettempdir(), 'cache')
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-# Redirect HF and Torch cache directories to D: drive to preserve space on C:
+DB_PATH = os.path.join(CACHE_DIR, 'stki.db')
+
+# Redirect HF and Torch cache directories
 os.environ['HF_HOME'] = os.path.join(CACHE_DIR, 'hf_home')
 os.environ['TORCH_HOME'] = os.path.join(CACHE_DIR, 'torch_home')
 
